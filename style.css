@@ -1,0 +1,28 @@
+body {
+    font-family: sans-serif;
+    background: #f4f4f4;
+    padding: 20px;
+  }
+  
+  .container {
+    max-width: 500px;
+    margin: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  input, select, button {
+    margin: 5px 0;
+    width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+  }
+  
+  .expense-item {
+    background: #eee;
+    padding: 10px;
+    margin: 5px 0;
+    border-radius: 4px;
+  }
+  
