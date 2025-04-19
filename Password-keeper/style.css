@@ -1,0 +1,18 @@
+body {
+    font-family: Arial, sans-serif;
+    padding: 20px;
+  }
+  input, button {
+    padding: 8px;
+    margin: 5px;
+  }
+  .entry {
+    border: 1px solid #ccc;
+    padding: 10px;
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+  .actions button {
+    margin-left: 5px;
+  }

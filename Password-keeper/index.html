@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Password Keeper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Password Keeper</h1>
+  <input type="text" id="title" placeholder="Title" />
+  <input type="password" id="password" placeholder="Password" />
+  <button onclick="addPassword()">Add</button>
+  <br/><br/>
+  <input type="text" id="search" placeholder="Search by title" oninput="searchPasswords()" />
+  <p id="searchResult"></p>
+  <h2>All Passwords</h2>
+  <div id="passwordList"></div>
+
+  <script src="script.js"></script>
+</body>
+</html>
