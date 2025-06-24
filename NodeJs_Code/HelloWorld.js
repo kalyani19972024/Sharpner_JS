@@ -1,28 +1,57 @@
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 
 const server = http.createServer((req, res) => {
-  res.writeHead(200, { 'Content-Type': 'text/html' });
+    const url = req.url;
+    const method = req.method;
+    const body = [];
 
-  let responseHtml = '';
+    if (url === "/") {
+        fs.readFile("formValues.txt", { encoding: "utf-8" }, (err, data) => {
+            if (err) {
+                console.log(err);
+                data = ''; // fallback if file read fails
+            }
 
-  switch (req.url) {
-    case '/home':
-      responseHtml = '<h1>Welcome home</h1>';
-      break;
-    case '/about':
-      responseHtml = '<h1>Welcome to About Us</h1>';
-      break;
-    case '/node':
-      responseHtml = '<h1>Welcome to my Node Js project</h1>';
-      break;
-    default:
-      res.statusCode = 404;
-      responseHtml = '<h1>Page Not Found</h1>';
-  }
+            res.write("<html>");
+            res.write("<head><title>Enter Message</title></head>");
+            res.write(`<body><div>${data}</div>`);
+            res.write(`<form action="/message" method="POST">
+                         <input type="text" name="message"/>
+                         <button type="submit">Send</button>
+                       </form></body>`);
+            res.write("</html>");
+            return res.end();
+        });
+    } else if (url === "/message" && method === "POST") {
+        req.on("data", (chunk) => {
+            body.push(chunk);
+        });
 
-  res.end(responseHtml);
+        return req.on("end", () => {
+            const parsedBody = Buffer.concat(body).toString();
+            const message = parsedBody.split("=")[1];
+
+            fs.writeFile("formValues.txt", message, (err) => {
+                if (err) {
+                    console.log("Error writing to file:", err);
+                }
+                res.statusCode = 302;
+                res.setHeader("Location", "/");
+                return res.end();
+            });
+        });
+    } else {
+        res.setHeader("Content-Type", "text/html");
+        res.write("<html>");
+        res.write("<head><title>My First Page</title></head>");
+        res.write("<body><h1>Hello From Node.js</h1></body>");
+        res.write("</html>");
+        res.end();
+    }
 });
 
 server.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+    console.log("Server is running on http://localhost:3000");
 });
