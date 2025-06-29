@@ -1,12 +1,19 @@
+const express = require('express');
+const app = express();
 
-const http=require('http')
 
-const express=require('express');
-const app=express()
+const setUser = (req,res,next) => {
+  req.user = 'Guest';
+  next();
+};
 
-app.use((req,res,next) => {
-    console.log("Server is up and running on port 3000! Ready to handle requests.");
-})
-const server=http.createServer(app)
+app.get('/welcome', setUser, (req, res) => {
+  res.send(`<h1>Welcome, ${req.user}!</h1>`);
+});
 
-server.listen(3000);
+
+app.listen(8000, () => {
+  console.log('Server is running ');
+});
+
+
