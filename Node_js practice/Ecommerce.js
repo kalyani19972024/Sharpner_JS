@@ -1,17 +1,15 @@
 
-const express=require('express');
-const app=express();
-const userRoutes=require('./Routes/userRoutes');
-const productRoutes=require('./Routes/productRoutes');
-const cartRoutes=require('./Routes/cartRoutes');
+const express = require('express');
+const app = express();
+const port = 3700;
+
+const productRoutes = require('./Routes/productRoutes');
 
 app.use(express.json());
 
-app.use('/users',userRoutes);
-app.use('/products',productRoutes);
-app.use('/cart',cartRoutes);
+// Mount product routes
+app.use('/products', productRoutes);
 
-
-app.listen(3400,() => {
-    console.log("server is running");
-})
+app.listen(port, () => {
+  console.log(`Server running at http://localhost:${port}`);
+});
