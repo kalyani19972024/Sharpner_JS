@@ -1,15 +1,32 @@
 
 const express = require('express');
 const app = express();
-const port = 3700;
 
-const productRoutes = require('./Routes/productRoutes');
 
 app.use(express.json());
 
-// Mount product routes
-app.use('/products', productRoutes);
 
-app.listen(port, () => {
-  console.log(`Server running at http://localhost:${port}`);
+const userRoutes = require('./Routes/userRoutes');
+const productRoutes = require('./Routes/productRoutes');
+const cartRoutes = require('./Routes/cartRoutes');
+
+
+app.use('/users', userRoutes);
+app.use('/products', productRoutes);
+app.use('/cart', cartRoutes);
+
+
+app.get('/', (req, res) => {
+    res.send("Welcome to the API");
 });
+
+
+app.use((req, res) => {
+    res.status(404).send("Route not found");
+});
+
+
+app.listen(3000, () => {
+    console.log(`Server is running `);
+});
+
