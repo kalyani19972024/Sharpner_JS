@@ -19,7 +19,8 @@ connection.connect((err) => {
 const creationQuery=`create table IF NOT EXISTS Students(
       id  INT  AUTO_INCREMENT  PRIMARY KEY ,
       name  VARCHAR(20),
-      email VARCHAR(20)
+      email VARCHAR(50),
+      age INT 
 )`
 
 connection.execute(creationQuery,(err) => {
