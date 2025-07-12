@@ -1,22 +1,35 @@
 
-const db=require('../utils/db-connection1');
+const Students = require('../models/students1');
+const Student=require('../models/students1');
+const IdentityCard = require('../models/identitycard');
 
-const addStudents=(req,res)=> {
-     const {email,name,age} = req.body ;
-     const insertQuery='INSERT INTO Students (email,name,age) VALUES (?,?,?)';
-
-     db.execute(insertQuery,[email,name,age],(err) => {
-          if(err){
-            console.log(err.message);
-            res.status(500).send(err.message);
-            db.end();
-            return ;
-          }
-          console.log('value has been inserted');
-          res.status(200).send(`Student with name ${name} successfully added`);
-     })
-
+const addStudents= async(req,res)=> {
+     try{
+           const {email,name} = req.body ;
+           const student= await Student.create({
+                name:name ,
+                email:email
+           });
+           res.status(201).send(`User with name ${name} is created !  `);
+     }catch (err){
+            res.status(500).send(`unable to make an entry. `);
+     }
      
+}
+
+const addingValuesToStudentAndIdentityTable= async(req,res)=> {
+    try{
+        const student=await Student.create(req.body.student);
+        const idCard=await IdentityCard.create({
+            ...req.body.IdentityCard,
+            StudentId:student.id
+        })
+
+        res.status(201).json({student,idCard});
+    }
+    catch(error){
+          res.status(500).json({error:error.message});
+    }
 }
 
 
@@ -64,6 +77,7 @@ const deleteStudents=(req,res)=> {
 
 module.exports={
     addStudents ,
+    addingValuesToStudentAndIdentityTable,
     updateStudents,
     deleteStudents
 }
