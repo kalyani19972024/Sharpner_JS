@@ -1,0 +1,22 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Expense Tracker</title>
+</head>
+<body>
+  <h1>Expense Tracker</h1>
+  <form id="expense-form">
+    <input type="number" id="amount" placeholder="Amount" required />
+    <input type="text" id="description" placeholder="Description" required />
+    <input type="text" id="category" placeholder="Category" required />
+    <button type="submit">Add Expense</button>
+  </form>
+
+  <ul id="expense-list"></ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
