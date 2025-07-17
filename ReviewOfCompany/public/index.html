@@ -1,0 +1,33 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add a Review</title>
+</head>
+<body>
+  <h2>Add a Review</h2>
+  <form id="reviewForm">
+    <input type="text" id="companyName" placeholder="Company Name" required><br>
+    <br></br>
+    <textarea id="pros" placeholder="Pros"></textarea><br>
+    <br></br>
+    <textarea id="cons" placeholder="Cons"></textarea><br>
+    <br></br>
+    <input type="number" id="rating" placeholder="Rating (1-5)" min="1" max="5" required><br>
+    <br></br>
+    <button type="submit">Submit Review</button>
+  </form>
+
+  <h2>Search Company</h2>
+  <input type="text" id="searchInput" placeholder="Search company...">
+  <button id="searchBtn">Submit</button>
+
+  <h3 id="Rating"></h3>
+  <div id="results"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="main.js"></script>
+
+  
+</body>
+</html>
