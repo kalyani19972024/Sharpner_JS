@@ -66,7 +66,7 @@
 
     <script>
         const form=document.getElementById('Signup-form');
-        form.addEventListener('submit', function(event) {
+        form.addEventListener('submit', async function(event) {
 
             event.preventDefault();
 
@@ -74,22 +74,35 @@
             const email=document.getElementById('email').value ;
             const password=document.getElementById('password').value ;
 
-           if(!name){
-             alert('name must be filled.');
-             return ;
-           }
 
-           if(!email){
-             alert('email must be filled.');
-             return;
-           }
-           
-            if (!password) {
-                alert('Please enter your password.');
-                return;
+             if (!name || !email || !password) {
+              alert('All fields are required!');
+              return;
             }
 
+      try {
+        const response = await fetch('http://localhost:3000/api/signup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password })
         });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          alert(data.message || 'Signup successful!');
+          form.reset();
+        } else {
+          alert(data.message || 'Signup failed.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Something went wrong while signing up.');
+      }
+
+           
+});
+
     </script> 
 </body>
 </html>>
