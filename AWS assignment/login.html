@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
     <style>
         body{
       font-family: Arial, sans-serif;
@@ -96,9 +97,9 @@
               return;
              }
          try{
-            // const response=await axios.get('http://localhost:3000/api/login',{
-            //      email,password
-            // });
+            const response=await axios.post('http://localhost:3200/api/login',{
+                email,password
+             });
             alert('login successful');
          } catch(error){
              console.error('login error',error);
