@@ -66,11 +66,17 @@
     .signup-link a:hover {
       text-decoration: underline;
     }
+    .hidden {
+      display: none;
+    }
 
+    #expense-form-section {
+      display: none;
+    }
     </style>
 </head>
 <body>
-    <div  class="container">
+    <div id="login-section" class="container">
         <h2>Login</h2>
         <form  id="login-form">
               <input id="email" type="email" placeholder="Email"/>
@@ -79,9 +85,25 @@
         </form>
 
     </div>
-    <div class="signup-link">
+    <!-- <div class="signup-link">
          New User? <a href="index.html">Sign up</a>
-    </div>
+    </div> -->
+
+      <div id="expense-form-section">
+    <h2>Add Expense</h2>
+    <form id="expense-form">
+      <input type="number" id="amount" placeholder="Amount Spent" required />
+      <input type="text" id="description" placeholder="Description" required />
+      <select id="category" required>
+        <option value="">Select Category</option>
+        <option value="Food">Food</option>
+        <option value="Petrol">Petrol</option>
+        <option value="Salary">Salary</option>
+      </select>
+      <button type="submit">Add Expense</button>
+    </form>
+  </div>
+
 
     <script>
          const form =document.getElementById('login-form');
@@ -97,10 +119,21 @@
               return;
              }
          try{
-            const response=await axios.post('http://localhost:3200/api/login',{
+            const response=await axios.post('http://localhost:3400/api/login',{
                 email,password
              });
-            alert('login successful');
+
+              // ✅ Save token to localStorage
+            localStorage.setItem('token', response.data.token);
+            alert(response.data.message || 'login successful');
+
+            // document.getElementById('login-section').classList.add('hidden');
+            // document.getElementById('expense-section').classList.remove('hidden');
+             // ✅ Save user info to localStorage
+           // localStorage.setItem('loggedInUser', JSON.stringify(user));
+
+            // ✅ Redirect to expense form
+             window.location.href = 'expense.html';
          } catch(error){
              console.error('login error',error);
                if (error.response) {
@@ -111,6 +144,6 @@
          }
         });    
     </script>
-
+    
 </body>
 </html>
