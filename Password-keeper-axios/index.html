@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Password Manager</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+    }
+
+    .form-section, .search-section {
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .form-group {
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      box-sizing: border-box;
+    }
+
+    button {
+      margin-top: 0.5rem;
+      padding: 0.5rem 1rem;
+    }
+
+    .password-list {
+      margin-top: 2rem;
+      padding: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+    }
+
+    .password-list h3 {
+      margin-top: 0;
+    }
+
+    ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    li {
+      padding: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    li button {
+      margin-left: 0.5rem;
+    }
+
+    .right-align {
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+
+  <h1 style="text-align: center;">Password Keeper</h1>
+
+  <div class="container">
+  
+    <div>
+      <form id="passwordForm">
+        <input type="hidden" id="passwordId"> 
+
+        <div class="form-group">
+          <label for="name">Title:</label>
+          <input type="text" id="name" required />
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="text" id="password" required />
+        </div>
+
+        <button type="submit">Add</button>
+      </form>
+    </div>
+
+    
+    <div class="right-align">
+      <label for="search" style="text-align: left;"><strong>Search</strong></label>
+      <input type="text" id="search" placeholder="Search by title" oninput="searchByTitle()" />
+      <p style="text-align: left;">Total Passwords: <span id="totalCount">0</span></p>
+    </div>
+  </div>
+
+  
+  <div>
+    <h3>All Passwords</h3>
+    <ul id="passwordList"></ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script src="script.js"></script>
+
+</body>
+</html>

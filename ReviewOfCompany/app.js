@@ -1,19 +1,23 @@
 
+
 const express = require('express');
-//const bodyParser = require('body-parser');
-//const cors = require('cors');
+const cors = require('cors');
 const sequelize = require('./utils/db');
 const reviewRoutes = require('./routes/reviewRoute');
-const Review = require('./models/review');
+
+const Company = require('./models/Company');
+const Review = require('./models/Review');
+
+
+
 
 const app = express();
-//app.use(cors());
+app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
 app.use('/api/reviews', reviewRoutes);
 
-// Sync DB and start server
-sequelize.sync().then(() => {
-  app.listen(3000, () => console.log('Server running at http://localhost:3000'));
+sequelize.sync({ force:true }).then(() => {
+  app.listen(3200, () => console.log('Server running on http://localhost:3200'));
 });

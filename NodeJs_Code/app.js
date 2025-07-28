@@ -30,10 +30,10 @@ const server=http.createServer((req,res)=> {
             req.on('end',()=>{
                 let buffer=Buffer.concat(body);
 
-                console.log(buffer);
+                //console.log(buffer);
 
                 let formData=buffer.toString();
-                console.log(formData);
+                //console.log(formData);
 
                 const formValues=formData.split('=')[1];
 
@@ -44,6 +44,15 @@ const server=http.createServer((req,res)=> {
                     res.end();
                 })
             })
+
+        }else{
+            if(req.url=='/read'){
+
+                fs.readFile('formValues.txt',(err,data) => {
+                     console.log(data.toString());
+                     res.end(`<h1>${data.toString()}</h1>`);
+                })
+            }
         }
      }
 })

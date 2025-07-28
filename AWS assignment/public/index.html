@@ -4,6 +4,8 @@
 <head>
     <meta charset="UTF-8">
     <title>Signup Form</title>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://sdk.cashfree.com/js/v3/cashfree.js"></script>
     <style>
          body{
             font-family: Arial, sans-serif;
@@ -80,27 +82,23 @@
               return;
             }
 
-      try {
-        const response = await fetch('http://localhost:3000/api/signup', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password })
-        });
+        try {
+             const response = await axios.post('http://localhost:3600/api/signup', {
+             name, email,password
+             });
 
-        const data = await response.json();
-
-        if (response.ok) {
-          alert(data.message || 'Signup successful!');
+          alert(response.data.message || 'Signup successful!');
+          window.location.href = 'login.html';
           form.reset();
-        } else {
-          alert(data.message || 'Signup failed.');
-        }
-      } catch (error) {
-        console.error('Error:', error);
-        alert('Something went wrong while signing up.');
-      }
-
-           
+            } catch (error) {
+                console.error('Error:', error);
+                if (error.response) {
+                  alert(error.response.data.message || 'Signup failed.');
+                } else {
+                   alert('Something went wrong while signing up.');
+                }
+            
+            } 
 });
 
     </script> 
