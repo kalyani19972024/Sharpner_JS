@@ -1,4 +1,4 @@
-
+const User = require('../models/User');
 const Expense = require('../models/Expense');
 
 // ✅ Add Expense
@@ -10,6 +10,11 @@ exports.addExpense = async (req, res) => {
   console.log("userID****", userId)
   try {
     const expense = await Expense.create({ amount, description, category,  userId });
+
+    const user = await User.findByPk(userId);
+    user.totalExpense += Number(amount);
+    await user.save();
+
     res.status(201).json(expense);
   } catch (error) {
     res.status(500).json({ error: 'Failed to add expense' });
@@ -32,11 +37,12 @@ console.log('req.user:', req.user);
 // ✅ Update Expense
 exports.updateExpense = async (req, res) => {
   const { amount, description, category } = req.body;
-  const expenseId = req.params.id;
-  const userId = req.user.userId;
+   const { id } = req.params;
+  // const expenseId = req.params.id;
+  // const userId = req.user.userId;
 
   try {
-    const expense = await Expense.findOne({ where: { id: expenseId, userId } });
+    const expense = await Expense.findOne({ where: { id, userId: req.user.id } });
 
     if (!expense) return res.status(404).json({ error: 'Expense not found' });
 
@@ -45,8 +51,9 @@ exports.updateExpense = async (req, res) => {
     expense.category = category;
 
     await expense.save();
-
-    res.status(200).json(expense);
+   
+    res.status(200).json({ message: 'Expense updated successfully', expense });
+    
   } catch (error) {
     res.status(500).json({ error: 'Failed to update expense' });
   }
@@ -54,11 +61,12 @@ exports.updateExpense = async (req, res) => {
 
 // ✅ Delete Expense
 exports.deleteExpense = async (req, res) => {
-  const expenseId = req.params.id;
-  const userId = req.user.userId;
+  // const expenseId = req.params.id;
+  // const userId = req.user.userId;
+  const { id } = req.params;
 
   try {
-    const deleted = await Expense.destroy({ where: { id: expenseId, userId } });
+    const deleted = await Expense.destroy({ where: { id, userId: req.user.id } });
 
     if (!deleted) return res.status(404).json({ error: 'Expense not found or not yours' });
 

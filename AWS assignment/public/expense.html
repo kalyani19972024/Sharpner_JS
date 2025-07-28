@@ -81,8 +81,8 @@
 </div>
 
     <h2>Add Expense</h2>
-<div id="premiumSection">
-  <h3>You are a premium user</h3>
+<div id="premiumSection" >
+  <h3></h3>
   <button id="showLeaderboardBtn">Show Leaderboard</button>
 </div>
     <form id="expense-form">
@@ -237,9 +237,6 @@
     }
   });
 
-//   // Assume res.data.token is returned after upgrading to premium
-// localStorage.setItem('token', response.data.token);
-// window.location.reload(); // Reload to activate premium UI
 
   // ✅ Check Premium Status and Show Leaderboard Button
   async function checkPremiumStatus() {
@@ -251,7 +248,7 @@
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      if (res.data.isPremium) {
+      if (res.data.isPremium ) {
            document.getElementById('premiumSection').innerText = 'You are a Premium User ';
       document.getElementById('showLeaderboardBtn').style.display = 'block';
       }
@@ -270,8 +267,10 @@
       leaderboardList.innerHTML = '';
 
       res.data.forEach(user => {
+         const name = user.name;
+  const total = user.totalExpense || 0;
         const li = document.createElement('li');
-        li.innerText = `${user.name} - ₹${user.totalExpenses}`;
+        li.innerText = `${user.name} - ₹${user.totalExpense}`;
         leaderboardList.appendChild(li);
       });
 

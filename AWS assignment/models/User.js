@@ -15,7 +15,15 @@ const User = sequelize.define('User', {
   password: {
     type: DataTypes.STRING,
     allowNull: false
-  }
+  },
+//   isPremiumUser: {
+//     type: DataTypes.BOOLEAN,
+//     defaultValue: false,
+//   },
+      totalExpense: {
+      type: DataTypes.FLOAT,
+        defaultValue: 0
+ }
 });
 
 module.exports = User;

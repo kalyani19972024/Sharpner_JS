@@ -20,7 +20,7 @@ exports.adduser = async (req, res) => {
     const user = await User.create({ name, email, password: hashedPassword });
 
     // 4. Generate JWT token using the created user's ID
-    const token = jwt.sign({ userId: user.id }, 'secretKey', { expiresIn: '1h' });
+    const token = jwt.sign({ userId: user.id }, 'myHardCodedSecret123', { expiresIn: '1h' });
 
     // 5. Send token (and optionally user info) as response
     res.status(201).json({
