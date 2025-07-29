@@ -114,13 +114,17 @@
 
 <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 <script>
-  const token = localStorage.getItem('token');
+  
   let editMode = false;
   let editExpenseId = null;
 
  
 
   document.addEventListener('DOMContentLoaded', async () => {
+     const token = localStorage.getItem('token');
+    if (token) {
+      fetchExpenses(); // call immediately on page load
+    }
   await checkPremiumStatus();
   await fetchExpenses();
   document.getElementById('showLeaderboardBtn').addEventListener('click', fetchLeaderboard);
@@ -149,9 +153,10 @@
         });
         alert('Expense added');
       }
-
-      resetForm();
       fetchExpenses();
+      resetForm();
+      
+      fetchLeaderboard();// update leaderboard
     } catch (err) {
       console.error('Error:', err);
       alert(editMode ? 'Failed to update expense' : 'Failed to add expense');
@@ -163,12 +168,12 @@
       const res = await axios.get('http://localhost:3600/api/expenses', {
         headers: { Authorization: `Bearer ${token}` }
       });
-
+        
       const container = document.getElementById('expenseContainer');
       container.innerHTML = '';
 
-      res.data.forEach(exp => {
-        const div = document.createElement('div');
+      res.data.forEach((exp) => {
+         const div = document.createElement('div');
         div.style.border = '1px solid #ccc';
         div.style.padding = '5px';
         div.style.marginBottom = '5px';
@@ -257,6 +262,7 @@
       console.error('Premium check error:', err);
     }
   }
+
  async function fetchLeaderboard() {
     try {
       const res = await axios.get('http://localhost:3600/api/premium/leaderboard', {

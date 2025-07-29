@@ -4,18 +4,15 @@ const Expense = require('../models/Expense');
 // ✅ Add Expense
 exports.addExpense = async (req, res) => {
   const { amount, description, category } = req.body;
- console.log("req.user:", req.user);
-    console.log("req.body:", req.body);
   const userId = req.user.id; // From token
   console.log("userID****", userId)
   try {
-    const expense = await Expense.create({ amount, description, category,  userId });
+    const expense = await Expense.create({ amount, description, category, UserId: userId });
 
     const user = await User.findByPk(userId);
-    user.totalExpense += Number(amount);
+    user.totalExpense = (user.totalExpense || 0) + Number(amount);
     await user.save();
-
-    res.status(201).json(expense);
+     res.status(201).json({ expense, totalExpense: user.totalExpense });
   } catch (error) {
     res.status(500).json({ error: 'Failed to add expense' });
   }
@@ -23,11 +20,13 @@ exports.addExpense = async (req, res) => {
 
 // ✅ Get All Expenses of Logged-in User
 exports.getAllExpenses = async (req, res) => {
- // const userId = req.user.userId;
+  const userId = req.user.id;
 console.log('req.user:', req.user);
 
   try {
-    const expenses = await Expense.findAll({ where: { userId: req.user.id  } });
+    console.log('Fetching expenses for userId:', userId);
+    const expenses = await Expense.findAll({ where: { userId } });
+    console.log('Expenses found:', expenses);
     res.status(200).json(expenses);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch expenses' });
