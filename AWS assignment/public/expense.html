@@ -276,7 +276,7 @@
          const name = user.name;
   const total = user.totalExpense || 0;
         const li = document.createElement('li');
-        li.innerText = `${user.name} - ₹${user.totalExpense}`;
+        li.innerText = `name-${user.name} - totalExpense-₹${user.totalExpense}`;
         leaderboardList.appendChild(li);
       });
 
