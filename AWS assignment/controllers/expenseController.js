@@ -1,19 +1,31 @@
 const User = require('../models/User');
 const Expense = require('../models/Expense');
+const  sequelize  = require('../utils/db');
+
+
+
 
 // ✅ Add Expense
 exports.addExpense = async (req, res) => {
   const { amount, description, category } = req.body;
   const userId = req.user.id; // From token
-  console.log("userID****", userId)
+  console.log("********inside add expense");
+  const t = await sequelize.transaction(); // Start a transaction
+  
   try {
-    const expense = await Expense.create({ amount, description, category, UserId: userId });
+    const expense = await Expense.create({ amount, description, category, UserId: userId },{transaction:t});
+     console.log("expense created",expense.amount,expense.id);
+    const user = await User.findByPk(userId,{transaction:t});
+    console.log("****users found",user.id);
+    const updatedTotal = (user.totalExpense || 0) + Number(amount);
+   
+    await User.update({ totalExpense: updatedTotal }, { where: { id: userId }, transaction: t });
 
-    const user = await User.findByPk(userId);
-    user.totalExpense = (user.totalExpense || 0) + Number(amount);
-    await user.save();
-     res.status(201).json({ expense, totalExpense: user.totalExpense });
+    await t.commit();
+     res.status(201).json({ expense, totalExpense: updatedTotal});
   } catch (error) {
+    await t.rollback();
+    console.error('Transaction failed:', error);
     res.status(500).json({ error: 'Failed to add expense' });
   }
 };
@@ -21,7 +33,7 @@ exports.addExpense = async (req, res) => {
 // ✅ Get All Expenses of Logged-in User
 exports.getAllExpenses = async (req, res) => {
   const userId = req.user.id;
-console.log('req.user:', req.user);
+//console.log('req.user:', req.user);
 
   try {
     console.log('Fetching expenses for userId:', userId);
@@ -62,15 +74,41 @@ exports.updateExpense = async (req, res) => {
 exports.deleteExpense = async (req, res) => {
   // const expenseId = req.params.id;
   // const userId = req.user.userId;
+  const t = await sequelize.transaction(); // Start a transaction
   const { id } = req.params;
 
+
   try {
-    const deleted = await Expense.destroy({ where: { id, userId: req.user.id } });
+     //console.log("➡️ Deleting expense ID:", id, "for user:", req.user.id);
+      // Step 1: Find the expense for this user
+    const expense = await Expense.findOne({ where: { id, UserId: req.user.id}, transaction: t });
 
-    if (!deleted) return res.status(404).json({ error: 'Expense not found or not yours' });
+    if (!expense) {
+      await t.rollback();
+      return res.status(404).json({ error: 'Expense not found or not yours' });
+    }
 
-    res.status(200).json({ message: 'Expense deleted' });
+    const amountToDeduct = Number(expense.amount);
+     await Expense.destroy({ where: { id, userId: req.user.id } },{transaction:t});
+
+      // Step 3: Update user's totalExpense
+    const user = await User.findByPk(req.user.id, { transaction: t });
+    const updatedTotal = (user.totalExpense ) - amountToDeduct;
+
+    await user.update(
+      { totalExpense: updatedTotal },
+      { transaction: t }
+    );
+
+    await t.commit();
+    
+    return res.status(200).json({ message: 'Expense deleted' });
+  
   } catch (error) {
-    res.status(500).json({ error: 'Failed to delete expense' });
+     if (!t.finished) {
+      await t.rollback();
+    }
+    console.error('Delete expense failed:', error);
+    res.status(500).json({ error: 'Failed to delete expense', details: error.message  });
   }
 };
