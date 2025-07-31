@@ -85,6 +85,8 @@
         </form>
 
     </div>
+     <p><a href="forgot-password.html">Forgot Password?</a></p>
+
  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
     
@@ -95,7 +97,7 @@
     const password = document.getElementById('password').value;
 
     try {
-      const response = await axios.post('http://localhost:3600/api/login', {
+      const response = await axios.post('http://localhost:3000/api/login', {
         email,
         password
       });
@@ -112,6 +114,9 @@
       alert('Login failed: ' + error.response?.data?.message || error.message);
     }
   });
+
+
+ 
 
 </script>
 
