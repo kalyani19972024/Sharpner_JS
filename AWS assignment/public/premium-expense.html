@@ -180,6 +180,19 @@
       </div>
     </div>
 
+     <!-- Pagination -->
+      <div class="pagination">
+        <div id="page-info">Page 1 of 1 — Total entries: 0</div>
+        <div class="page-controls">
+          <button id="firstBtn">First</button>
+          <button id="prevBtn">Prev</button>
+          <button id="nextBtn">Next</button>
+          <button id="lastBtn">Last</button>
+        </div>
+      </div>
+    </div>
+
+
     <!-- Yearly report always shown -->
     <div class="section" aria-label="Yearly report">
       <div class="yearly-title">Yearly Report (by month)</div>
@@ -210,6 +223,8 @@
     let allEntries = [];
     let filteredEntries = [];
     let currentRange = 'daily';
+    let currentPage = 1;
+    const PER_PAGE = 10;
 
     // Format helper
     function fmtAmount(x) {
@@ -278,6 +293,19 @@
       }
     }
 
+    // Render pagination controls
+    function renderPagination() {
+      const info = document.getElementById('page-info');
+      const total = filteredEntries.length;
+      const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+      info.textContent = `Page ${currentPage} of ${totalPages} — Total entries: ${total}`;
+      document.getElementById('firstBtn').disabled = currentPage === 1;
+      document.getElementById('prevBtn').disabled = currentPage === 1;
+      document.getElementById('nextBtn').disabled = currentPage === totalPages;
+      document.getElementById('lastBtn').disabled = currentPage === totalPages;
+    }
+
+
     // Yearly aggregation
     function getYearlyData() {
       const now = new Date();
@@ -337,6 +365,29 @@
       });
     });
 
+     // Pagination button handlers
+    document.getElementById('firstBtn').addEventListener('click', () => {
+      currentPage = 1;
+      renderEntries();
+      renderPagination();
+    });
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      if (currentPage > 1) currentPage--;
+      renderEntries();
+      renderPagination();
+    });
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      const totalPages = Math.max(1, Math.ceil(filteredEntries.length / PER_PAGE));
+      if (currentPage < totalPages) currentPage++;
+      renderEntries();
+      renderPagination();
+    });
+    document.getElementById('lastBtn').addEventListener('click', () => {
+      currentPage = Math.max(1, Math.ceil(filteredEntries.length / PER_PAGE));
+      renderEntries();
+      renderPagination();
+    });
+
     // Download entries
     document.getElementById('downloadEntries').addEventListener('click', () => {
       if (!isPremium) return;
@@ -388,3 +439,14 @@
 
     // Expose setter globally
     window.setDashboardEntries = setDashboardEntries;
+      // Example data to test pagination (remove in production)
+    window.setDashboardEntries([
+      { date: '2025-08-02', description: 'Lunch', category: 'Food', amount: 250, type: 'Expense' },
+      { date: '2025-08-02', description: 'Project payout', category: 'Work', amount: 12000, type: 'Income' },
+      { date: '2025-08-01', description: 'Groceries', category: 'Household', amount: 800, type: 'Expense' },
+      // you can add more entries here to see pagination in action
+    ]);
+     </script>
+
+</body>
+</html>
