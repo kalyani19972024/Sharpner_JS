@@ -103,6 +103,18 @@
 
     <h3>Expenses:</h3>
     <div id="expenseContainer"></div>
+
+    <!-- Pagination controls -->
+<div id="paginationWrapper" style="display:none; margin-top:10px; display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+  <div id="pageInfo" style="font-size:0.9rem;">Page 1 of 1 — Total: 0</div>
+  <div style="display:flex; gap:6px;">
+    <button id="firstPageBtn" style="padding:6px 10px;">First</button>
+    <button id="prevPageBtn" style="padding:6px 10px;">Prev</button>
+    <button id="nextPageBtn" style="padding:6px 10px;">Next</button>
+    <button id="lastPageBtn" style="padding:6px 10px;">Last</button>
+  </div>
+</div>
+
    
 <!-- Leaderboard display -->
 <div id="leaderboard" >
@@ -118,7 +130,10 @@
   let editMode = false;
   let editExpenseId = null;
 
- 
+   // Pagination state
+  let allExpenses = []; // full list from server
+  let currentPage = 1;
+  const PER_PAGE = 2;
 
   document.addEventListener('DOMContentLoaded', async () => {
      const token = localStorage.getItem('token');
@@ -128,7 +143,14 @@
   await checkPremiumStatus();
   await fetchExpenses();
   document.getElementById('showLeaderboardBtn').addEventListener('click', fetchLeaderboard);
-});
+   document.getElementById('firstPageBtn').addEventListener('click', () => changePage(1));
+    document.getElementById('prevPageBtn').addEventListener('click', () => changePage(currentPage - 1));
+    document.getElementById('nextPageBtn').addEventListener('click', () => changePage(currentPage + 1));
+    document.getElementById('lastPageBtn').addEventListener('click', () => {
+      const last = Math.max(1, Math.ceil(allExpenses.length / PER_PAGE));
+      changePage(last);
+    });
+  });
 
   // ✅ Add or Update Expense
   document.getElementById('expense-form').addEventListener('submit', async (e) => {
@@ -139,24 +161,24 @@
     
     try {
       if (editMode) {
-        await axios.put(`http://localhost:3600/api/expenses/${editExpenseId}`, {
+        await axios.put(`http://localhost:3000/api/expenses/${editExpenseId}`, {
           amount, description, category
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Expense updated');
       } else {
-        await axios.post('http://localhost:3600/api/expenses', {
+        await axios.post('http://localhost:3000/api/expenses', {
           amount, description, category
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Expense added');
       }
-      fetchExpenses();
+      await fetchExpenses();
       resetForm();
       
-      fetchLeaderboard();// update leaderboard
+      await fetchLeaderboard();// update leaderboard
     } catch (err) {
       console.error('Error:', err);
       alert(editMode ? 'Failed to update expense' : 'Failed to add expense');
@@ -165,15 +187,33 @@
 
   async function fetchExpenses() {
     try {
-      const res = await axios.get('http://localhost:3600/api/expenses', {
+      const res = await axios.get('http://localhost:3000/api/expenses', {
         headers: { Authorization: `Bearer ${token}` }
       });
-        
-      const container = document.getElementById('expenseContainer');
-      container.innerHTML = '';
+     allExpenses = Array.isArray(res.data) ? res.data.slice() : [];
+      if (currentPage > Math.ceil(allExpenses.length / PER_PAGE)) {
+        currentPage = Math.max(1, Math.ceil(allExpenses.length / PER_PAGE));
+      }
+      renderExpensePage();
+      renderPaginationControls();
+    } catch (err) {
+      console.error('Fetch error:', err);
+    }
+  }
 
-      res.data.forEach((exp) => {
-         const div = document.createElement('div');
+   function renderExpensePage() {
+    const container = document.getElementById('expenseContainer');
+    container.innerHTML = '';
+    const total = allExpenses.length;
+    const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+    const startIdx = (currentPage - 1) * PER_PAGE;
+    const pageSlice = allExpenses.slice(startIdx, startIdx + PER_PAGE);
+
+    if (!pageSlice.length) {
+      container.innerHTML = `<div style="padding:8px; color:#555;">No expenses to show.</div>`;
+    } else {
+      pageSlice.forEach((exp, idx) => {
+        const div = document.createElement('div');
         div.style.border = '1px solid #ccc';
         div.style.padding = '5px';
         div.style.marginBottom = '5px';
@@ -187,24 +227,45 @@
           <span><strong>₹${exp.amount}</strong></span>
           <span>${exp.description}</span>
           <span><em>${exp.category}</em></span>
-          <button onclick="editExpense(${exp.id}, ${exp.amount}, '${exp.description}', '${exp.category}')">Edit</button>
-          <button onclick="deleteExpense(${exp.id})">Delete</button>
+          <div style="display:flex; gap:6px;">
+            <button onclick="editExpense(${exp.id}, ${exp.amount}, '${escapeSingleQuote(exp.description)}', '${escapeSingleQuote(exp.category)}')">Edit</button>
+            <button onclick="deleteExpense(${exp.id})">Delete</button>
+          </div>
         `;
-
         container.appendChild(div);
       });
-
-    } catch (err) {
-      console.error('Fetch error:', err);
     }
   }
+    
+  function renderPaginationControls() {
+    const wrapper = document.getElementById('paginationWrapper');
+    const info = document.getElementById('pageInfo');
+    const total = allExpenses.length;
+    const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
+    wrapper.style.display = total === 0 ? 'none' : 'flex';
+    info.textContent = `Page ${currentPage} of ${totalPages} — Total: ${total}`;
+
+    document.getElementById('firstPageBtn').disabled = currentPage === 1;
+    document.getElementById('prevPageBtn').disabled = currentPage === 1;
+    document.getElementById('nextPageBtn').disabled = currentPage === totalPages;
+    document.getElementById('lastPageBtn').disabled = currentPage === totalPages;
+  }
+
+  function changePage(newPage) {
+    const totalPages = Math.max(1, Math.ceil(allExpenses.length / PER_PAGE));
+    if (newPage < 1) newPage = 1;
+    if (newPage > totalPages) newPage = totalPages;
+    currentPage = newPage;
+    renderExpensePage();
+    renderPaginationControls();
+  }    
 
   async function deleteExpense(id) {
     try {
-      await axios.delete(`http://localhost:3600/api/expenses/${id}`, {
+      await axios.delete(`http://localhost:3000/api/expenses/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      fetchExpenses();
+      await fetchExpenses();
     } catch (err) {
       console.error('Delete error:', err);
     }
@@ -228,10 +289,15 @@
     document.querySelector('#expense-form button').textContent = 'Add Expense';
   }
 
+  
+  function escapeSingleQuote(str) {
+    return String(str).replace(/'/g, "\\'");
+  }
+
   // ✅ Buy Premium Button
   document.getElementById('buyPremiumBtn').addEventListener('click', async () => {
     try {
-      const response = await axios.post('http://localhost:3600/api/purchase/create-order', {}, {
+      const response = await axios.post('http://localhost:3000/api/purchase/create-order', {}, {
         headers: { Authorization: `Bearer ${token}` }
       });
       const paymentLink = response.data.paymentLink;
@@ -249,7 +315,7 @@
     const token = localStorage.getItem('token');
 
     try {
-      const res = await axios.get('http://localhost:3600/api/user/status', {
+      const res = await axios.get('http://localhost:3000/api/user/status', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
@@ -265,7 +331,7 @@
 
  async function fetchLeaderboard() {
     try {
-      const res = await axios.get('http://localhost:3600/api/premium/leaderboard', {
+      const res = await axios.get('http://localhost:3000/api/premium/leaderboard', {
         headers: { Authorization: `Bearer ${token}` }
       });
 
