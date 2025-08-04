@@ -95,6 +95,8 @@
         <option value="Salary">Salary</option>
         <option value="Misc">Misc</option>
       </select>
+      <input type="text" id="note" placeholder="Short comment"  required />
+
       <button type="submit">Add Expense</button>
 
   
@@ -158,18 +160,19 @@
     const amount = document.getElementById('amount').value;
     const description = document.getElementById('description').value;
     const category = document.getElementById('category').value;
+    const note=  document.getElementById('note').value;
     
     try {
       if (editMode) {
         await axios.put(`http://localhost:3000/api/expenses/${editExpenseId}`, {
-          amount, description, category
+          amount, description, category,note
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
         alert('Expense updated');
       } else {
         await axios.post('http://localhost:3000/api/expenses', {
-          amount, description, category
+          amount, description, category,note
         }, {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -227,6 +230,7 @@
           <span><strong>₹${exp.amount}</strong></span>
           <span>${exp.description}</span>
           <span><em>${exp.category}</em></span>
+          <span><em>${exp.note}</em></span>
           <div style="display:flex; gap:6px;">
             <button onclick="editExpense(${exp.id}, ${exp.amount}, '${escapeSingleQuote(exp.description)}', '${escapeSingleQuote(exp.category)}')">Edit</button>
             <button onclick="deleteExpense(${exp.id})">Delete</button>
@@ -271,10 +275,11 @@
     }
   }
 
-  function editExpense(id, amount, description, category) {
+  function editExpense(id, amount, description, category,note) {
     document.getElementById('amount').value = amount;
     document.getElementById('description').value = description;
     document.getElementById('category').value = category;
+    document.getElementById('note').value = note;
 
     editMode = true;
     editExpenseId = id;

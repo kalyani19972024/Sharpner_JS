@@ -7,13 +7,13 @@ const  sequelize  = require('../utils/db');
 
 // ✅ Add Expense
 exports.addExpense = async (req, res) => {
-  const { amount, description, category } = req.body;
+  const { amount, description, category,note } = req.body;
   const userId = req.user.id; // From token
   console.log("********inside add expense");
   const t = await sequelize.transaction(); // Start a transaction
   
   try {
-    const expense = await Expense.create({ amount, description, category, UserId: userId },{transaction:t});
+    const expense = await Expense.create({ amount, description, category, note,UserId: userId },{transaction:t});
      console.log("expense created",expense.amount,expense.id);
     const user = await User.findByPk(userId,{transaction:t});
     console.log("****users found",user.id);
@@ -47,7 +47,7 @@ exports.getAllExpenses = async (req, res) => {
 
 // ✅ Update Expense
 exports.updateExpense = async (req, res) => {
-  const { amount, description, category } = req.body;
+  const { amount, description, category, note } = req.body;
    const { id } = req.params;
   // const expenseId = req.params.id;
   // const userId = req.user.userId;
@@ -60,6 +60,7 @@ exports.updateExpense = async (req, res) => {
     expense.amount = amount;
     expense.description = description;
     expense.category = category;
+    expense.note = note;
 
     await expense.save();
    

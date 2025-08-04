@@ -15,7 +15,11 @@ const Expense = sequelize.define('Expense', {
   category: {
     type: DataTypes.STRING,
     allowNull: false
-  }
+  }, // new field:
+    note: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
 });
 
 module.exports = Expense;
