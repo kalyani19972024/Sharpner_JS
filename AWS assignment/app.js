@@ -27,7 +27,8 @@ app.use(express.static('public'));
 app.use('/api/user', userRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api', authRoutes);
-// app.use('/api/purchase', purchaseRoutes);
+// app.use('api/purchase', purchaseRoutes);
+app.use('/api/purchase', require('./routes/purchaseRoute'));
 app.use('/api/premium', premiumRoutes);
 app.use('/password', passwordRoutes);
 

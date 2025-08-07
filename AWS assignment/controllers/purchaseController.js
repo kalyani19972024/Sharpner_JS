@@ -1,71 +1,38 @@
-// require('dotenv').config();
-// const Cashfree = require('cashfree-pg');
-// const Order = require('../models/Order');
-// const User = require('../models/User');
+const Razorpay = require('razorpay');
 
-// // Initialize Cashfree (SANDBOX or PRODUCTION)
-// Cashfree.PG.init({
-//   clientId: process.env.CASHFREE_APP_ID,
-//   clientSecret: process.env.CASHFREE_SECRET_KEY,
-//   environment: 'SANDBOX', // change to 'PRODUCTION' in production
-// });
 
-// exports.createOrder = async (req, res) => {
-//   const userId = req.user.userId;
-//   console.log("User trying to buy premium:", req.user);
+exports.purchasePremium = async(req, res) => {
 
-//   const orderId = `order_${Date.now()}`; // unique order id
+  console.log("***************");
+  try{
+    var rzp = new Razorpay({
+      key_id:process.env.RAZORPAY_KEY_ID,
+      key_secret:process.env.RAZORPAY_KEY_SECRET
+    })
 
-//   const orderRequest = {
-//     order_id: orderId,
-//     order_amount: 99.0,
-//     order_currency: 'INR',
-//     customer_details: {
-//       customer_id: `${userId}`,
-//       customer_email: 'test@example.com', // Ideally from user record
-//       customer_phone: '9999999999',       // Ideally from user record
-//     },
-//   };
+    const amount = 2500 * 100;
 
-//   try {
-//     const response = await Cashfree.PG.Orders.create(orderRequest);
-//     console.log("Cashfree Order Response:", response);
+    const order = await rzp.orders.create({ amount, currency: "INR" }); // ✅ use await
 
-//     await Order.create({
-//       orderid: orderId,
-//       status: 'PENDING',
-//       userId,
-//     });
+    await req.user.createOrder({ orderId: order.id, status: "PENDING" });
 
-//     res.status(200).json({ payment_link: response.payment_link, orderId });
-//   } catch (err) {
-//     console.error('Create order error:', err);
-//     res.status(500).json({ message: 'Failed to create Cashfree order' });
-//   }
-// };
+    return res.status(201).json({ order, key_id: rzp.key_id });
 
-// exports.updateOrderStatus = async (req, res) => {
-//   const { orderId, paymentStatus } = req.body;
+    // rzp.orders.create({amount,currency:"INR"},(err,o)=>{
 
-//   try {
-//     const order = await Order.findOne({ where: { orderid: orderId } });
+    //   if(err){
+    //     throw new Error(JSON.stringify(err));
+    //   }
 
-//     if (!order) {
-//       return res.status(404).json({ message: 'Order not found' });
-//     }
+    //   req.user.createOrder({orderid:o.id,status:"PENDING"}).then(() => {
+    //     return res.status(201).json({o, key_id:rzp.key_id})
+    //   })
 
-//     order.status = paymentStatus;
-//     await order.save();
-
-//     if (paymentStatus === 'PAID' || paymentStatus === 'SUCCESS') {
-//       const user = await User.findByPk(order.userId);
-//       user.isPremium = true;
-//       await user.save();
-//     }
-
-//     res.status(200).json({ message: 'Order status updated successfully' });
-//   } catch (err) {
-//     console.error('Update order status error:', err);
-//     res.status(500).json({ message: 'Failed to update order status' });
-//   }
-// };
+    // })
+  
+  }
+  catch(error) {
+    console.error('Error while purchasing:', error);
+    return res.status(403).json({ message: 'Something went wrong', error: error });
+  }
+}

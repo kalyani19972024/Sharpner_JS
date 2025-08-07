@@ -78,6 +78,7 @@
   <button id="buyPremiumBtn" style="padding: 5px 10px; font-size: 14px; background-color: gold; border: none; border-radius: 4px; cursor: pointer;">
     Buy Premium
   </button>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
 </div>
 
     <h2>Add Expense</h2>
@@ -299,19 +300,28 @@
     return String(str).replace(/'/g, "\\'");
   }
 
-  // ✅ Buy Premium Button
-  document.getElementById('buyPremiumBtn').addEventListener('click', async () => {
-    try {
-      const response = await axios.post('http://localhost:3000/api/purchase/create-order', {}, {
+ document.getElementById("buyPremiumBtn").onclick = async function(event) {
+    const token = localStorage.getItem("token");
+    const response = await axios.get('http://localhost:3000/api/purchase/premiummembership', {
         headers: { Authorization: `Bearer ${token}` }
-      });
-      const paymentLink = response.data.paymentLink;
-      window.location.href = paymentLink;
-    } catch (err) {
-      console.error('Payment error:', err);
-      alert('Failed to start premium purchase');
-    }
-  });
+    });
+
+    console.log(response);
+  }
+
+  // ✅ Buy Premium Button
+  // document.getElementById('buyPremiumBtn').addEventListener('click', async () => {
+  //   try {
+  //     const response = await axios.post('http://localhost:3000/api/purchase/create-order', {}, {
+  //       headers: { Authorization: `Bearer ${token}` }
+  //     });
+  //     const paymentLink = response.data.paymentLink;
+  //     window.location.href = paymentLink;
+  //   } catch (err) {
+  //     console.error('Payment error:', err);
+  //     alert('Failed to start premium purchase');
+  //   }
+  // });
 
 
   // ✅ Check Premium Status and Show Leaderboard Button
