@@ -307,21 +307,30 @@
     });
 
     console.log(response);
+    var options= 
+    {
+       "key":response.data.key_id ,
+       "order_id":response.data.order.id ,
+       "handler" : async function (response) {
+        await axios.post('http://localhost:3000/api/purchase/updatetransactionstatus',{
+            order_id: options.order_id ,
+            payment_id: response.razorpay_payment_id, 
+          },  {headers : {Authorization: `Bearer ${token}`}});
+
+          alert('You are a premium user now');
+      }
+    };
+    const rzp1= new Razorpay(options);
+    rzp1.open();
+    event.preventDefault();
+
+    rzp1.on('payment .failed' , function(response){
+      console.log(response);
+      alert('something went wrong');
+    });
+
   }
 
-  // ✅ Buy Premium Button
-  // document.getElementById('buyPremiumBtn').addEventListener('click', async () => {
-  //   try {
-  //     const response = await axios.post('http://localhost:3000/api/purchase/create-order', {}, {
-  //       headers: { Authorization: `Bearer ${token}` }
-  //     });
-  //     const paymentLink = response.data.paymentLink;
-  //     window.location.href = paymentLink;
-  //   } catch (err) {
-  //     console.error('Payment error:', err);
-  //     alert('Failed to start premium purchase');
-  //   }
-  // });
 
 
   // ✅ Check Premium Status and Show Leaderboard Button
