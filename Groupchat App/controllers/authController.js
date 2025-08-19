@@ -10,9 +10,9 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-    if (!/^[0-9]{10}$/.test(phone)) {
-      return res.status(400).json({ message: "Phone number must be 10 digits" });
-   }
+//     if (!/^[0-9]{10}$/.test(phone)) {
+//       return res.status(400).json({ message: "Phone number must be 10 digits" });
+//    }
 
     // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
