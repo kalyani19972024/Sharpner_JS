@@ -1,189 +1,184 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat App</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f9f9f9;
+      background: #f7f7f7;
       margin: 0;
       padding: 0;
-      display: flex;
-      justify-content: center;
     }
-
     #chatContainer {
-      width: 500px;
-      height: 90vh;
-      border: 1px solid #ccc;
-      background: white;
-      display: flex;
-      flex-direction: column;
+      width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
     }
-
     h2 {
       text-align: center;
-      margin: 0;
-      padding: 10px;
-      background: #333;
-      color: white;
     }
-
-    /* Joined users section */
-    #joinedUsers {
-      max-height: 150px;
+    #users, #messages {
+      max-height: 200px;
       overflow-y: auto;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
     }
-
-    #joinedUsers div {
+    .user {
       padding: 8px;
     }
-
-    #joinedUsers div:nth-child(odd) {
-      background: #f0f0f0; /* grey */
+    .user:nth-child(odd) {
+      background: #eee;
     }
-
-    #joinedUsers div:nth-child(even) {
-      background: #ffffff; /* white */
+    .user:nth-child(even) {
+      background: #fff;
     }
-
-    /* Messages section */
-    #messages {
-      flex: 1;
-      padding: 10px;
-      overflow-y: auto;
-      background: #fafafa;
+    .message {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
     }
-
-    .msg {
-      margin: 5px 0;
-    }
-
-    .msg.you {
-      text-align: right;
-      font-weight: bold;
-    }
-
-    /* Input area */
-    #messageInput {
+    #chatForm {
       display: flex;
-      border-top: 1px solid #ccc;
+      gap: 10px;
     }
-
-    #messageInput input {
+    #chatForm input {
       flex: 1;
-      padding: 10px;
-      border: none;
-      outline: none;
+      padding: 8px;
     }
-
-    #messageInput button {
-      padding: 10px 20px;
-      border: none;
-      background: #333;
+    #chatForm button {
+      padding: 8px 12px;
+      background: #007BFF;
       color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
-    }
-
-    #messageInput button:hover {
-      background: #555;
     }
   </style>
 </head>
 <body>
   <div id="chatContainer">
     <h2>CHAT APP</h2>
-
-    <!-- Joined Users -->
-    <div id="joinedUsers"></div>
-
-    <!-- Chat Messages -->
+    <div id="users"></div>
     <div id="messages"></div>
-
-    <!-- Input -->
-    <div id="messageInput">
-      <input type="text" id="msg" placeholder="Type a message..." />
-      <button onclick="sendMessage()">Send</button>
-    </div>
+    <form id="chatForm">
+      <input type="text" id="messageInput" placeholder="Type a message..." required />
+      <button type="submit">Send</button>
+    </form>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
   <script>
-      const currentUser = localStorage.getItem("username"); 
-  const token = localStorage.getItem("token");
+    const API_BASE = "http://localhost:3000";
 
-  const joinedUsersDiv = document.getElementById("joinedUsers");
-  const messagesDiv = document.getElementById("messages");
-
-  // Fetch users
-  async function loadUsers() {
-    try {
-      const res = await axios.get("http://localhost:3000/chat/users", {
-        headers: { Authorization: token }
-      });
-      joinedUsersDiv.innerHTML = "";
-      res.data.forEach((u, idx) => {
-        const div = document.createElement("div");
-        div.textContent = u.name + " joined";
-        div.style.background = idx % 2 === 0 ? "#f0f0f0" : "#fff";
-        joinedUsersDiv.appendChild(div);
-      });
-    } catch (err) {
-      console.error("Error fetching users", err);
+    function getToken() {
+      return localStorage.getItem("token");
     }
-  }
 
-  // Fetch messages
-  async function loadMessages() {
-    try {
-      const res = await axios.get("http://localhost:3000/chat/messages", {
-        headers: { Authorization: token }
-      });
-      messagesDiv.innerHTML = "";
-      res.data.forEach(m => {
-        appendMessage(m.User.name, m.text);
-      });
-    } catch (err) {
-      console.error("Error fetching messages", err);
+    function isTokenExpired(token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return Date.now() >= payload.exp * 1000;
+      } catch (e) {
+        return true; // invalid or no token
+      }
     }
-  }
 
-  // Send new message
-  async function sendMessage() {
-    const msgBox = document.getElementById("msg");
-    const msg = msgBox.value.trim();
-    if (!msg) return;
-
-    try {
-      await axios.post("http://localhost:3000/chat/messages", 
-        { text: msg },
-        { headers: { Authorization: token } }
-      );
-      msgBox.value = "";
-      loadMessages(); // refresh chat
-    } catch (err) {
-      console.error("Error sending message", err);
+    function handleAuthError() {
+      alert("Session expired. Please login again.");
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
     }
-  }
 
-  function appendMessage(user, text) {
-    const p = document.createElement("p");
-    p.classList.add("msg");
-    if (user === currentUser) {
-      p.classList.add("you");
-      p.textContent = `you: ${text}`;
-    } else {
-      p.textContent = `${user}: ${text}`;
+    async function loadUsers() {
+      const token = getToken();
+      if (!token || isTokenExpired(token)) return handleAuthError();
+      try {
+        const res = await axios.get(`${API_BASE}/users`, {
+          headers: { Authorization: token }
+        });
+        const usersDiv = document.getElementById("users");
+        usersDiv.innerHTML = "";
+        res.data.forEach((u, idx) => {
+          const div = document.createElement("div");
+          div.classList.add("user");
+          div.textContent = `${u.name} joined`;
+          usersDiv.appendChild(div);
+        });
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          handleAuthError();
+        } else {
+          console.error("Error loading users", err);
+        }
+      }
     }
-    messagesDiv.appendChild(p);
-    messagesDiv.scrollTop = messagesDiv.scrollHeight;
-  }
 
-  // Load on page open
-  loadUsers();
-  loadMessages();
+    async function loadMessages() {
+      const token = getToken();
+      if (!token || isTokenExpired(token)) return handleAuthError();
+      try {
+        const res = await axios.get(`${API_BASE}/chat/messages`, {
+          headers: { Authorization: token }
+        });
+        const messagesDiv = document.getElementById("messages");
+        messagesDiv.innerHTML = "";
+        res.data.forEach(msg => {
+          const div = document.createElement("div");
+          div.classList.add("message");
+          div.textContent = `${msg.User1 ? msg.User1.name : "Unknown"}: ${msg.text}`;
+          messagesDiv.appendChild(div);
+        });
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          handleAuthError();
+        } else {
+          console.error("Error loading messages", err);
+        }
+      }
+    }
+
+    async function sendMessage(message) {
+      const token = getToken();
+      if (!token || isTokenExpired(token)) return handleAuthError();
+      try {
+        await axios.post(`${API_BASE}/chat/messages`, { text:message }, {
+          headers: { Authorization: token }
+        });
+        loadMessages();
+      } catch (err) {
+        if (err.response && err.response.status === 401) {
+          handleAuthError();
+        } else {
+          console.error("Error sending message", err);
+        }
+      }
+    }
+
+    document.getElementById("chatForm").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const input = document.getElementById("messageInput");
+      const message = input.value.trim();
+      if (message) {
+        sendMessage(message);
+        input.value = "";
+      }
+    });
+
+    // // Poll every second
+    // setInterval(() => {
+    //   loadUsers();
+    //   loadMessages();
+    // }, 1000);
+
+    // Initial load
+    loadUsers();
+    loadMessages();
   </script>
 </body>
 </html>

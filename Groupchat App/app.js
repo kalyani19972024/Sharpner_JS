@@ -6,12 +6,22 @@ const app=express();
 const cors = require("cors");
 app.use(bodyParser.json());
 const sequelize=require('./utils/db');
+require("./models/User1");
+require("./models/message"); 
 
 // Serve static files from "public" folder
 app.use(express.static(path.join(__dirname, "public")));
 
 const authRoutes = require("./routes/authRoute");
+const messageRoutes = require("./routes/messageRoute");
+const chatRoutes = require("./routes/chatRoute");
+const userRoutes = require("./routes/userRoute");
+
+
+app.use("/messages", messageRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/chat", chatRoutes);
+app.use("/", userRoutes);
 
 // ✅ CORS setup (production-ready)
 const corsOptions = {
