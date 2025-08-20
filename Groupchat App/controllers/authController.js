@@ -1,5 +1,6 @@
 
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 const User = require("../models/User1");
 
 exports.signup = async (req, res) => {
@@ -10,11 +11,7 @@ exports.signup = async (req, res) => {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
-//     if (!/^[0-9]{10}$/.test(phone)) {
-//       return res.status(400).json({ message: "Phone number must be 10 digits" });
-//    }
-
-    // Check if user already exists
+  // Check if user already exists
     const existingUser = await User.findOne({ where: { email } });
     if (existingUser) {
       return res.status(400).json({ message: "Email already registered" });
@@ -32,6 +29,36 @@ exports.signup = async (req, res) => {
     });
 
     res.status(201).json({ message: "User registered successfully", userId: newUser.id });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Something went wrong" });
+  }
+};
+
+
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    // 1. Check if user exists
+    const user = await User.findOne({ where: { email } });
+    if (!user) {
+      return res.status(400).json({ message: "User does not exist" });
+    }
+
+    // 2. Compare password
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid password" });
+    }
+
+    // 3. Generate JWT token
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },  process.env.JWT_SECRET, { expiresIn: "1h" } );
+
+   // console.log("JWT_SECRET:", process.env.JWT_SECRET);
+
+    res.json({ message: "Login successful", token });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "Something went wrong" });
