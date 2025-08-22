@@ -73,6 +73,26 @@
     </form>
   </div>
 
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <h2>Groups</h2>
+    <div id="groupList"></div>
+    <form id="createGroupForm">
+      <input type="text" id="groupName" placeholder="New group name..." required />
+      <button type="submit">Create</button>
+    </form>
+  </div>
+  
+   <!-- Chat Pane -->
+  <div id="chatPane">
+    <div id="chatHeader">Select a group</div>
+    <div id="messages"></div>
+    <form id="chatForm" style="display:none;">
+      <input type="text" id="messageInput" placeholder="Type a message..." required />
+      <button type="submit">Send</button>
+    </form>
+  </div>
+
   <script>
     const API_BASE = "http://localhost:3000";
 
@@ -221,6 +241,93 @@ window.onload = async () => {
     fetchNewMessages(lastId);
   }, 3000);
 };
+
+// Axios instance with JWT
+const API = axios.create({ baseURL: "http://localhost:3000" });
+API.interceptors.request.use((req) => {
+  const token = localStorage.getItem("token");
+  if (token) req.headers.Authorization = `Bearer ${token}`;
+  return req;
+});
+
+let currentGroupId = null;
+
+// Load my groups
+async function loadGroups() {
+  try {
+    const res = await API.get("/groups");
+    const groups = res.data;
+    const list = document.getElementById("groupList");
+    list.innerHTML = "";
+    groups.forEach(g => {
+      const div = document.createElement("div");
+      div.textContent = g.name;
+      div.onclick = () => selectGroup(g.id, g.name);
+      list.appendChild(div);
+    });
+  } catch (err) {
+    console.error("Error loading groups", err);
+  }
+}
+
+// Select a group
+async function selectGroup(groupId, groupName) {
+  currentGroupId = groupId;
+  document.getElementById("chatHeader").textContent = groupName;
+  document.getElementById("chatForm").style.display = "flex";
+  loadMessages();
+}
+
+// Load messages
+async function loadMessages() {
+  if (!currentGroupId) return;
+  try {
+    const res = await API.get(`/groups/${currentGroupId}/messages`);
+    const msgs = res.data;
+    const box = document.getElementById("messages");
+    box.innerHTML = "";
+    msgs.forEach(m => {
+      const div = document.createElement("div");
+      div.className = "msg";
+      div.innerHTML = `<span>${m.User?.name || "Unknown"}:</span> ${m.text}`;
+      box.appendChild(div);
+    });
+    box.scrollTop = box.scrollHeight;
+  } catch (err) {
+    console.error("Error loading messages", err);
+  }
+}
+
+// Send message
+document.getElementById("chatForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const text = document.getElementById("messageInput").value.trim();
+  if (!text || !currentGroupId) return;
+  try {
+    await API.post(`/groups/${currentGroupId}/messages`, { text });
+    document.getElementById("messageInput").value = "";
+    loadMessages();
+  } catch (err) {
+    console.error("Error sending message", err);
+  }
+});
+
+// Create group
+document.getElementById("createGroupForm").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const name = document.getElementById("groupName").value.trim();
+  if (!name) return;
+  try {
+    await API.post("/groups", { name });
+    document.getElementById("groupName").value = "";
+    loadGroups();
+  } catch (err) {
+    console.error("Error creating group", err);
+  }
+});
+
+// Initial load
+loadGroups();
 
    
   </script>
