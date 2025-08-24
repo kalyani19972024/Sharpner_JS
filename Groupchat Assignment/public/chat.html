@@ -1,0 +1,149 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Chat App</title>
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f7f7f7;
+      margin: 0;
+      padding: 0;
+    }
+    #chatContainer {
+      width: 600px;
+      margin: 20px auto;
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 20px;
+    }
+    h2 {
+      text-align: center;
+    }
+    #users, #messages {
+      max-height: 200px;
+      overflow-y: auto;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      padding: 10px;
+    }
+    .user {
+      padding: 8px;
+    }
+    .user:nth-child(odd) {
+      background: #eee;
+    }
+    .user:nth-child(even) {
+      background: #fff;
+    }
+    .message {
+      padding: 6px;
+      border-bottom: 1px solid #ddd;
+    }
+    #chatForm {
+      display: flex;
+      gap: 10px;
+    }
+    #chatForm input {
+      flex: 1;
+      padding: 8px;
+    }
+    #chatForm button {
+      padding: 8px 12px;
+      background: #007BFF;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div id="chatContainer">
+    <h2>CHAT APP</h2>
+    <div id="users"></div>
+    <div id="messages"></div>
+    <form id="chatForm">
+      <input type="text" id="messageInput" placeholder="Type a message..." required />
+      <button type="submit"id="sendBtn">Send</button>
+    </form>
+  </div>
+
+  
+<script>
+    const API_BASE = "http://localhost:3000"; // adjust if different
+
+function getToken() {
+  return localStorage.getItem("token"); // or however you store JWT
+}
+
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]));
+    return Date.now() >= payload.exp * 1000;
+  } catch {
+    return true;
+  }
+}
+
+function handleAuthError() {
+  alert("Session expired. Please login again.");
+  // redirect to login page
+  window.location.href = "login.html";
+}
+
+async function loadMessages() {
+  const token = getToken();
+  if (!token) return handleAuthError();
+
+  try {
+    const res = await axios.get(`${API_BASE}/chat/messages`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const messagesDiv = document.getElementById("messages");
+    messagesDiv.innerHTML = "";
+    res.data.forEach(msg => {
+      const div = document.createElement("div");
+      div.textContent = `${msg.User ? msg.User.name : "Unknown"}: ${msg.text}`;
+      messagesDiv.appendChild(div);
+    });
+  } catch (err) {
+    if (err.response && err.response.status === 401) handleAuthError();
+    else console.error(err);
+  }
+}
+
+
+async function sendMessage() {
+  const text = document.getElementById("messageInput").value.trim();
+  if (!text) return;
+
+  const token = getToken();
+  if (!token) return handleAuthError();
+
+  try {
+    await axios.post(`${API_BASE}/chat/messages`, { text }, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    document.getElementById("messageInput").value = "";
+    loadMessages();
+  } catch (err) {
+    if (err.response && err.response.status === 401) handleAuthError();
+    else console.error(err);
+  }
+}
+
+
+
+document.getElementById("sendBtn").addEventListener("click", sendMessage);
+loadMessages();
+// setInterval(loadMessages, 2000);
+
+    
+  </script>
+</body>
+</html>
