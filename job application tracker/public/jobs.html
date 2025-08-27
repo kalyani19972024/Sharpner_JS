@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Job Applications</title>
+  <link rel="stylesheet" href="style.css">
+  
+    <link rel="stylesheet" href="/style.css">
+
+</head>
+<body>
+  <h2>Log Job Application</h2>
+  <form id="jobForm" enctype="multipart/form-data">
+    <input type="hidden" id="jobId"> <!-- hidden field for editing -->
+    <input type="text" id="companyName" placeholder="Company Name" required><br>
+    <input type="text" id="jobTitle" placeholder="Job Title" required><br>
+    <input type="date" id="applicationDate" required><br>
+    <select id="status">
+      <option value="Applied">Applied</option>
+      <option value="Interviewed">Interviewed</option>
+      <option value="Offered">Offered</option>
+      <option value="Rejected">Rejected</option>
+    </select><br>
+    <textarea id="notes" placeholder="Notes"></textarea><br>
+    <input type="file" id="attachment" accept=".pdf,.doc,.docx"><br>
+    <button type="submit">Save Application</button>
+  </form>
+
+  <h2>My Applications</h2>
+
+  <!-- 🔍 Search & Filter -->
+  <div class="filters">
+    <input type="text" id="searchBox" placeholder="Search by company...">
+    <select id="filterStatus">
+      <option value="">All Statuses</option>
+      <option value="Applied">Applied</option>
+      <option value="Interviewed">Interviewed</option>
+      <option value="Offered">Offered</option>
+      <option value="Rejected">Rejected</option>
+    </select>
+    <button onclick="applyFilters()">Filter</button>
+    <button onclick="resetFilters()">Reset</button>
+  </div>
+
+  <ul id="jobList"></ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Please login first!");
+      window.location.href = "login.html";
+    }
+
+    const jobForm = document.getElementById("jobForm");
+    const jobList = document.getElementById("jobList");
+    const jobIdInput = document.getElementById("jobId");
+    let allJobs = []; // store jobs for filtering
+
+    // Save or Update job
+    jobForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const jobId = jobIdInput.value;
+      const formData = new FormData();
+      formData.append("companyName", document.getElementById("companyName").value);
+      formData.append("jobTitle", document.getElementById("jobTitle").value);
+      formData.append("applicationDate", document.getElementById("applicationDate").value);
+      formData.append("status", document.getElementById("status").value);
+      formData.append("notes", document.getElementById("notes").value);
+      if (document.getElementById("attachment").files[0]) {
+        formData.append("attachment", document.getElementById("attachment").files[0]);
+      }
+
+      try {
+        if (jobId) {
+          await axios.put(`http://localhost:3000/api/jobs/${jobId}`, formData, {
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+          });
+          alert("Job application updated!");
+        } else {
+          await axios.post("http://localhost:3000/api/jobs", formData, {
+            headers: { Authorization: `Bearer ${token}`, "Content-Type": "multipart/form-data" }
+          });
+          console.log("Token from localStorage:", token);
+          alert("Job application saved!");
+        }
+        resetForm();
+        loadJobs();
+      } catch (err) {
+        alert("Error saving job application");
+      }
+    });
+
+    function resetForm() {
+      jobIdInput.value = "";
+      jobForm.reset();
+      jobForm.querySelector("button").textContent = "Save Application";
+    }
+
+    // Load jobs from backend
+    async function loadJobs() {
+      jobList.innerHTML = "";
+      try {
+        const res = await axios.get("http://localhost:3000/api/jobs", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        allJobs = res.data; // save for filtering
+        renderJobs(allJobs);
+      } catch (err) {
+        jobList.innerHTML = "<li>Failed to load applications</li>";
+      }
+    }
+
+    // Render jobs list
+    function renderJobs(jobs) {
+      jobList.innerHTML = "";
+      if (jobs.length === 0) {
+        jobList.innerHTML = "<li>No applications found</li>";
+        return;
+      }
+      jobs.forEach(job => {
+        const li = document.createElement("li");
+        li.innerHTML = `
+          <strong>${job.companyName}</strong> - ${job.jobTitle} (${job.status}) <br>
+          Applied on: ${job.applicationDate} <br>
+          Notes: ${job.notes || "N/A"} <br>
+          ${job.attachment ? `<a href="/uploads/${job.attachment}" target="_blank">View Attachment</a>` : ""}
+          <br>
+          <button onclick="editJob(${job.id}, '${job.companyName}', '${job.jobTitle}', '${job.applicationDate}', '${job.status}', \`${job.notes || ""}\`)">Edit</button>
+          <button onclick="deleteJob(${job.id})">Delete</button>
+          <hr>
+        `;
+        jobList.appendChild(li);
+      });
+    }
+
+    // Edit job
+    window.editJob = (id, companyName, jobTitle, applicationDate, status, notes) => {
+      jobIdInput.value = id;
+      document.getElementById("companyName").value = companyName;
+      document.getElementById("jobTitle").value = jobTitle;
+      document.getElementById("applicationDate").value = applicationDate;
+      document.getElementById("status").value = status;
+      document.getElementById("notes").value = notes;
+      jobForm.querySelector("button").textContent = "Update Application";
+    };
+
+    // Delete job
+    window.deleteJob = async (id) => {
+      if (!confirm("Are you sure you want to delete this application?")) return;
+      try {
+        await axios.delete(`http://localhost:3000/api/jobs/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        alert("Job application deleted");
+        loadJobs();
+      } catch (err) {
+        alert("Error deleting job application");
+      }
+    };
+
+    // 🔍 Apply filters
+    function applyFilters() {
+      const searchTerm = document.getElementById("searchBox").value.toLowerCase();
+      const filterStatus = document.getElementById("filterStatus").value;
+
+      const filteredJobs = allJobs.filter(job => {
+        const matchesSearch = job.companyName.toLowerCase().includes(searchTerm);
+        const matchesStatus = filterStatus ? job.status === filterStatus : true;
+        return matchesSearch && matchesStatus;
+      });
+
+      renderJobs(filteredJobs);
+    }
+
+    // Reset filters
+    function resetFilters() {
+      document.getElementById("searchBox").value = "";
+      document.getElementById("filterStatus").value = "";
+      renderJobs(allJobs);
+    }
+
+    loadJobs();
+  </script>
+</body>
+</html>
