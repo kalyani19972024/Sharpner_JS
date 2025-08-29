@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saved Job Listings</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h2>Saved Job Listings</h2>
+
+  <!-- Job Listing Form -->
+  <form id="listingForm">
+    <input type="hidden" id="listingId" name="listingId">
+
+    <input type="text" id="companyName" name="companyName" placeholder="Company Name" required><br>
+    <input type="text" id="jobTitle" name="jobTitle" placeholder="Job Title" required><br>
+    <input type="url" id="jobLink" name="jobLink" placeholder="Job Link"><br>
+    <textarea id="notes" name="notes" placeholder="Notes"></textarea><br>
+
+    <button type="submit">Save Listing</button>
+  </form>
+
+  <h3>Your Saved Listings</h3>
+  <ul id="listingList"></ul>
+
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <script>
+    const token = localStorage.getItem("token");
+    const listingForm = document.getElementById("listingForm");
+    const listingIdInput = document.getElementById("listingId");
+    const listingList = document.getElementById("listingList");
+
+    // Load saved listings
+    async function loadListings() {
+      try {
+        const res = await axios.get("http://localhost:3000/api/job-listings", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        const listings = res.data;
+        listingList.innerHTML = "";
+        listings.forEach(listing => {
+          const li = document.createElement("li");
+          li.innerHTML = `
+            <strong>${listing.companyName}</strong> - ${listing.jobTitle}<br>
+            ${listing.jobLink ? `<a href="${listing.jobLink}" target="_blank">🔗 Job Link</a><br>` : ""}
+            ${listing.notes ? `📝 ${listing.notes}<br>` : ""}
+            <button onclick="moveToApplications(${listing.id})">📩 Apply Now</button>
+            <button onclick="deleteListing(${listing.id})">❌ Delete</button>
+          `;
+          listingList.appendChild(li);
+        });
+      } catch (err) {
+        console.error("Error loading listings:", err);
+      }
+    }
+
+    // Save / Update Listing
+    listingForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const listingId = listingIdInput.value;
+      const data = {
+        companyName: document.getElementById("companyName").value,
+        jobTitle: document.getElementById("jobTitle").value,
+        jobLink: document.getElementById("jobLink").value,
+        notes: document.getElementById("notes").value
+      };
+
+      try {
+        if (listingId) {
+          await axios.put(`http://localhost:3000/api/job-listings/${listingId}`, data, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          alert("Listing updated!");
+        } else {
+          await axios.post("http://localhost:3000/api/job-listings", data, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          alert("Listing saved!");
+        }
+        resetForm();
+        loadListings();
+      } catch (err) {
+        console.error("Save error:", err.response?.data || err.message);
+        alert("Error saving job listing");
+      }
+    });
+
+    // Delete Listing
+    async function deleteListing(id) {
+      if (!confirm("Delete this listing?")) return;
+      try {
+        await axios.delete(`http://localhost:3000/api/job-listings/${id}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        loadListings();
+      } catch (err) {
+        console.error("Delete error:", err);
+      }
+    }
+
+    // Move listing → job application
+    async function moveToApplications(listingId) {
+      try {
+        // fetch the listing first
+        const res = await axios.get(`http://localhost:3000/api/job-listings/${listingId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const listing = res.data;
+
+        // create a job application with this data
+        await axios.post("http://localhost:3000/api/jobs", {
+          companyName: listing.companyName,
+          jobTitle: listing.jobTitle,
+          notes: listing.notes
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+
+        // delete the saved listing
+        await deleteListing(listingId);
+
+        alert("Listing moved to Applications!");
+      } catch (err) {
+        console.error("Move error:", err);
+      }
+    }
+
+    function resetForm() {
+      listingForm.reset();
+      listingIdInput.value = "";
+    }
+
+    loadListings();
+  </script>
+</body>
+</html>

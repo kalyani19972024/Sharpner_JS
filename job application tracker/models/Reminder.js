@@ -4,6 +4,8 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db");
 const User = require("./User");
 const jobApplication = require("./jobApplication");
+const Company = require("./Company");
+const JobListing = require("./JobListing");
 
 const Reminder = sequelize.define("Reminder", {
   id: {
@@ -32,5 +34,12 @@ Reminder.belongsTo(User, { foreignKey: "userId" });
 
 jobApplication.hasMany(Reminder, { foreignKey: "jobId" });
 Reminder.belongsTo(jobApplication, { foreignKey: "jobId" });
+
+Company.hasMany(jobApplication); // One company -> Many job applications
+jobApplication.belongsTo(Company);
+
+Company.hasMany(JobListing);
+JobListing.belongsTo(Company);
+
 
 module.exports = Reminder;

@@ -11,6 +11,8 @@ const authRoutes = require("./routes/authRoute");
 const userRoutes = require("./routes/userRoute");
 const jobRoutes = require("./routes/jobRoute");
 const reminderRoutes = require("./routes/reminderRoute");
+const companyRoutes = require("./routes/companyRoute");
+const jobListingRoutes = require("./routes/jobListingRoute");
 
 
 
@@ -32,6 +34,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/jobs", jobRoutes);
 app.use("/api/reminders", reminderRoutes);
+app.use("/companies", companyRoutes);
+app.use("/api/job-listings", jobListingRoutes);
 // serve uploads folder publicly
 app.use(express.static("uploads"));
 
