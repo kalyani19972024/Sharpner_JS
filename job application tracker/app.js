@@ -3,15 +3,21 @@ const express = require("express");
 const bodyParser = require("body-parser");
 const cors = require("cors");
 const path = require("path");
-
+require("./utils/reminderJob");  // 👈 this starts the cron job
 const sequelize = require("./utils/db"); // DB connection
 const User = require("./models/User"); // load User model
 
 const authRoutes = require("./routes/authRoute");
 const userRoutes = require("./routes/userRoute");
 const jobRoutes = require("./routes/jobRoute");
+const reminderRoutes = require("./routes/reminderRoute");
+
+
 
 const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
 
 // Middlewares
 app.use(cors());
@@ -25,6 +31,11 @@ app.use(express.static(path.join(__dirname, "public")));
 app.use("/api/auth", authRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/jobs", jobRoutes);
+app.use("/api/reminders", reminderRoutes);
+// serve uploads folder publicly
+app.use(express.static("uploads"));
+
+
 
 // Default route
 app.get("/", (req, res) => {
@@ -32,7 +43,7 @@ app.get("/", (req, res) => {
 });
 
 // Sync database and start server
-sequelize.sync().then(() => {
+sequelize.sync({alter:true}).then(() => {
     console.log("Database connected and synced!");
     const PORT = process.env.PORT || 3000;
     app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));

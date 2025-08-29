@@ -3,7 +3,7 @@ const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db");
 const User = require("./User");
 
-const JobApplication = sequelize.define("JobApplication", {
+const jobApplication = sequelize.define("jobApplication", {
   id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
   companyName: { type: DataTypes.STRING, allowNull: false },
   jobTitle: { type: DataTypes.STRING, allowNull: false },
@@ -19,7 +19,7 @@ const JobApplication = sequelize.define("JobApplication", {
 });
 
 // Association: one user has many job applications
-User.hasMany(JobApplication, { foreignKey: "userId", onDelete: "CASCADE" });
-JobApplication.belongsTo(User, { foreignKey: "userId" });
+User.hasMany(jobApplication, { foreignKey: "userId", onDelete: "CASCADE" });
+jobApplication.belongsTo(User, { foreignKey: "userId" });
 
-module.exports = JobApplication;
+module.exports = jobApplication;

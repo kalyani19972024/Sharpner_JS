@@ -13,7 +13,7 @@ exports.createJob = async (req, res) => {
       applicationDate,
       status,
       notes,
-      attachment: req.file ? req.file.filename : null,
+      attachment: req.file ? req.file.path : null,
       userId
     });
     res.json(job);
