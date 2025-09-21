@@ -3,6 +3,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db');
 const{ User }= require('../models/User');
 
+
 const Expense = sequelize.define('Expense', {
   amount: {
     type: DataTypes.FLOAT,

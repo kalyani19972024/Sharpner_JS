@@ -2,17 +2,15 @@
 const { DataTypes } = require("sequelize");
 const sequelize = require("../utils/db");
 const User = require("./User");
+const Group = require("./Group");
 
 const Message = sequelize.define("Message", {
-  text: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  }
+  id: { type: DataTypes.INTEGER, autoIncrement: true, primaryKey: true },
+  text: { type: DataTypes.TEXT, allowNull: false },
+  userId: { type: DataTypes.INTEGER, allowNull: false },
+  groupId: { type: DataTypes.INTEGER, allowNull: false }
 });
 
-
-// Association
-User.hasMany(Message, { foreignKey: "userId" });
-Message.belongsTo(User, { foreignKey: "userId" });
-
 module.exports = Message;
+
+

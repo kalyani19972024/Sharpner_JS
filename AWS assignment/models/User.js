@@ -2,6 +2,7 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../utils/db');
 
+
 const User = sequelize.define('User', {
   name: {
     type: DataTypes.STRING,
@@ -23,7 +24,12 @@ const User = sequelize.define('User', {
  ispremiumuser : {
     type: DataTypes.BOOLEAN ,
     defaultValue:false
- }
+ },
+ income: {
+  type: DataTypes.FLOAT,
+  allowNull: true,
+  defaultValue: 0
+}
 });
 
 module.exports = User;

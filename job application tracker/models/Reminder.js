@@ -35,8 +35,6 @@ Reminder.belongsTo(User, { foreignKey: "userId" });
 jobApplication.hasMany(Reminder, { foreignKey: "jobId" });
 Reminder.belongsTo(jobApplication, { foreignKey: "jobId" });
 
-Company.hasMany(jobApplication); // One company -> Many job applications
-jobApplication.belongsTo(Company);
 
 Company.hasMany(JobListing);
 JobListing.belongsTo(Company);

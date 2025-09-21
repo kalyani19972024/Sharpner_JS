@@ -2,6 +2,7 @@
 const { DataTypes, Sequelize } = require('sequelize');
 const sequelize = require('../utils/db'); // adjust path if needed
 
+
 const Order = sequelize.define('Order', {
   id: {
     type: Sequelize.INTEGER,
