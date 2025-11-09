@@ -1,0 +1,263 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Whiteboard — CollabBoard</title>
+  <style>
+    :root { --accent: #0b69ff; }
+    body { margin: 0; font-family: Arial, Helvetica, sans-serif; background:#f3f6fb; }
+    header { display:flex; align-items:center; justify-content:space-between; padding:10px 16px; background:var(--accent); color:#fff; }
+    #toolbar { display:flex; gap:8px; align-items:center; }
+    input[type=color], input[type=range], button { padding:6px 10px; border-radius:6px; border:none; cursor:pointer; }
+    main { display:flex; height: calc(100vh - 56px); gap:12px; padding:12px; box-sizing:border-box; }
+    .canvas-wrap { flex: 1; background:#fff; border-radius:8px; box-shadow:0 6px 18px rgba(12,20,30,0.06); display:flex; flex-direction:column; }
+    canvas { border-radius:8px; width:100%; height:100%; display:block; }
+    .sidebar { width:360px; display:flex; flex-direction:column; gap:12px; }
+    .chat { background:#fff; padding:8px; border-radius:8px; height:60%; overflow:auto; box-shadow:0 6px 18px rgba(12,20,30,0.06); }
+    .chat input { width:100%; box-sizing:border-box; padding:8px; margin-top:8px; border-radius:6px; border:1px solid #ddd; }
+    .participants { background:#fff; padding:8px; border-radius:8px; box-shadow:0 6px 18px rgba(12,20,30,0.06); }
+    .msg { margin-bottom:8px; padding:6px; border-radius:6px; background:#f1f5fb; }
+    .meta { font-size:12px; color:#666; margin-bottom:4px; }
+    button.active { background: #004ecb; color: #fff; }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display:flex; gap:12px; align-items:center;">
+      <h3 style="margin:0">CollabBoard</h3>
+      <small id="roomLabel" style="opacity:0.9"></small>
+    </div>
+    <div id="toolbar">
+      <input type="color" id="colorPicker" value="#000000" title="Color">
+      <input type="range" id="brushSize" min="1" max="30" value="3" title="Brush size">
+      <button id="drawMode" class="active">✏️ Draw</button>
+      <button id="textMode">🔤 Text</button>
+      <button id="rectMode">⬛ Rect</button>
+      <button id="circleMode">⚪ Circle</button>
+      <button id="lineMode">📏 Line</button>
+      <button id="eraser">🧽 Eraser</button>
+      <button id="clearBtn">🧹 Clear</button>
+      <button id="leaveBtn">🚪 Leave</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="canvas-wrap">
+      <canvas id="board"></canvas>
+    </div>
+
+    <aside class="sidebar">
+      <div class="chat">
+        <div id="chatMessages"></div>
+        <input id="chatInput" placeholder="Type message and press Enter">
+      </div>
+
+      <div class="participants">
+        <h4>Participants</h4>
+        <div id="participantsList"></div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    (function () {
+      const socket = io();
+      const params = new URLSearchParams(window.location.search);
+      const boardId = params.get("boardId") || "default";
+      socket.emit("joinRoom", boardId);
+      document.getElementById("roomLabel").textContent = boardId;
+
+      const canvas = document.getElementById("board");
+      const ctx = canvas.getContext("2d");
+      const colorPicker = document.getElementById("colorPicker");
+      const brushSize = document.getElementById("brushSize");
+      const eraserBtn = document.getElementById("eraser");
+      const clearBtn = document.getElementById("clearBtn");
+      const leaveBtn = document.getElementById("leaveBtn");
+      const chatMessages = document.getElementById("chatMessages");
+      const chatInput = document.getElementById("chatInput");
+      const participantsList = document.getElementById("participantsList");
+
+      const username = localStorage.getItem("username") || "User-" + Math.floor(Math.random() * 1000);
+
+      function resizeCanvas() {
+        const wrap = canvas.parentElement.getBoundingClientRect();
+        const dpr = window.devicePixelRatio || 1;
+        canvas.width = wrap.width * dpr;
+        canvas.height = (window.innerHeight - document.querySelector("header").offsetHeight - 24) * dpr;
+        canvas.style.width = wrap.width + "px";
+        canvas.style.height = (window.innerHeight - document.querySelector("header").offsetHeight - 24) + "px";
+        ctx.scale(dpr, dpr);
+        ctx.lineCap = "round";
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      let drawing = false;
+      let currentTool = "draw";
+      let lastPos = null;
+      let currentColor = colorPicker.value;
+      let currentSize = parseInt(brushSize.value);
+      let startX, startY;
+
+      // --- TOOL SELECTION ---
+      const tools = ["drawMode", "textMode", "rectMode", "circleMode", "lineMode"];
+      tools.forEach(id => {
+        document.getElementById(id).addEventListener("click", () => {
+          tools.forEach(t => document.getElementById(t).classList.remove("active"));
+          document.getElementById(id).classList.add("active");
+          currentTool = id.replace("Mode", "");
+          canvas.style.cursor = currentTool === "text" ? "text" : "crosshair";
+        });
+      });
+
+      // --- TEXT TOOL ---
+      canvas.addEventListener("click", (e) => {
+        if (currentTool !== "text") return;
+        const text = prompt("Enter text:");
+        if (text) {
+          const rect = canvas.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          ctx.font = `${currentSize * 4}px Arial`;
+          ctx.fillStyle = currentColor;
+          ctx.fillText(text, x, y);
+          socket.emit("drawText", { boardId, text, x, y, color: currentColor, size: currentSize });
+        }
+      });
+
+      socket.on("drawText", (data) => {
+        ctx.font = `${data.size * 4}px Arial`;
+        ctx.fillStyle = data.color || "black";
+        ctx.fillText(data.text, data.x, data.y);
+      });
+
+      // --- SHAPE DRAWING ---
+      canvas.addEventListener("mousedown", (e) => {
+        drawing = true;
+        const rect = canvas.getBoundingClientRect();
+        startX = e.clientX - rect.left;
+        startY = e.clientY - rect.top;
+        lastPos = { x: startX, y: startY };
+      });
+
+      canvas.addEventListener("mouseup", (e) => {
+        if (!drawing) return;
+        drawing = false;
+        const rect = canvas.getBoundingClientRect();
+        const endX = e.clientX - rect.left;
+        const endY = e.clientY - rect.top;
+
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+
+        switch (currentTool) {
+          case "rect":
+            ctx.strokeRect(startX, startY, endX - startX, endY - startY);
+            socket.emit("drawShape", { boardId, type: "rect", x: startX, y: startY, w: endX - startX, h: endY - startY, color: currentColor, size: currentSize });
+            break;
+          case "circle":
+            const radius = Math.sqrt((endX - startX) ** 2 + (endY - startY) ** 2);
+            ctx.beginPath();
+            ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+            ctx.stroke();
+            socket.emit("drawShape", { boardId, type: "circle", x: startX, y: startY, r: radius, color: currentColor, size: currentSize });
+            break;
+          case "line":
+            ctx.beginPath();
+            ctx.moveTo(startX, startY);
+            ctx.lineTo(endX, endY);
+            ctx.stroke();
+            socket.emit("drawShape", { boardId, type: "line", x1: startX, y1: startY, x2: endX, y2: endY, color: currentColor, size: currentSize });
+            break;
+        }
+      });
+
+      socket.on("drawShape", (data) => {
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = data.size;
+        switch (data.type) {
+          case "rect":
+            ctx.strokeRect(data.x, data.y, data.w, data.h);
+            break;
+          case "circle":
+            ctx.beginPath();
+            ctx.arc(data.x, data.y, data.r, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+          case "line":
+            ctx.beginPath();
+            ctx.moveTo(data.x1, data.y1);
+            ctx.lineTo(data.x2, data.y2);
+            ctx.stroke();
+            break;
+        }
+      });
+
+      // --- DRAW MODE (freehand) ---
+      canvas.addEventListener("mousemove", (e) => {
+        if (!drawing || currentTool !== "draw") return;
+        const rect = canvas.getBoundingClientRect();
+        const pos = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+        ctx.strokeStyle = currentColor;
+        ctx.lineWidth = currentSize;
+        ctx.beginPath();
+        ctx.moveTo(lastPos.x, lastPos.y);
+        ctx.lineTo(pos.x, pos.y);
+        ctx.stroke();
+        socket.emit("draw", { boardId, x: pos.x, y: pos.y, color: currentColor, size: currentSize });
+        lastPos = pos;
+      });
+
+      socket.on("onDraw", (data) => {
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = data.size;
+        ctx.beginPath();
+        ctx.arc(data.x, data.y, Math.max(1, data.size / 2), 0, Math.PI * 2);
+        ctx.fillStyle = data.color;
+        ctx.fill();
+      });
+
+      // --- CLEAR ---
+      clearBtn.addEventListener("click", () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        socket.emit("clear", boardId);
+      });
+      socket.on("onClear", () => ctx.clearRect(0, 0, canvas.width, canvas.height));
+
+      // --- CHAT ---
+      chatInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") {
+          const text = chatInput.value.trim();
+          if (!text) return;
+          socket.emit("chat", { boardId, user: username, message: text });
+          appendChat({ user: "Me", message: text, time: Date.now() });
+          chatInput.value = "";
+        }
+      });
+
+      socket.on("chatMessage", (payload) => appendChat(payload));
+      function appendChat({ user, message, time }) {
+        const d = document.createElement("div");
+        d.className = "msg";
+        d.innerHTML = `<div class="meta">${user} • ${new Date(time).toLocaleTimeString()}</div>${message}`;
+        chatMessages.appendChild(d);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+      }
+
+      // --- LEAVE ---
+      leaveBtn.addEventListener("click", () => {
+        if (confirm("Are you sure you want to leave this board?")) {
+          socket.disconnect();
+          window.location.href = "dashboard.html";
+        }
+      });
+
+      colorPicker.addEventListener("change", (e) => currentColor = e.target.value);
+      brushSize.addEventListener("change", (e) => currentSize = parseInt(e.target.value));
+    })();
+  </script>
+</body>
+</html>

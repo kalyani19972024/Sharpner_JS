@@ -1,0 +1,92 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard - CollabBoard</title>
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f7f8fc;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      flex-direction: column;
+    }
+
+    .container {
+      background: #fff;
+      padding: 2rem 3rem;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+
+    button {
+      background: #4f46e5;
+      color: #fff;
+      border: none;
+      padding: 0.7rem 1.5rem;
+      margin-top: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 1rem;
+    }
+
+    button:hover {
+      background: #4338ca;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .logout {
+      background: #ef4444;
+    }
+
+    .logout:hover {
+      background: #dc2626;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Welcome to CollabBoard 🎨</h1>
+    <p id="userEmail"></p>
+
+    <button id="joinBtn">Join Whiteboard</button>
+    <button id="logoutBtn" class="logout">Logout</button>
+  </div>
+
+  <script>
+    // ✅ Check if JWT token exists
+    const token = localStorage.getItem("token");
+    const email = localStorage.getItem("email");
+
+    if (!token) {
+      alert("Please log in first!");
+      window.location.href = "login.html";
+    }
+
+    // Display user email
+    document.getElementById("userEmail").textContent = `Logged in as: ${email}`;
+
+    // Logout button
+    document.getElementById("logoutBtn").addEventListener("click", () => {
+      localStorage.removeItem("token");
+      localStorage.removeItem("email");
+      window.location.href = "login.html";
+    });
+
+    // Join whiteboard
+    document.getElementById("joinBtn").addEventListener("click", () => {
+      window.location.href = "whiteboard.html";
+    });
+  </script>
+</body>
+</html>
