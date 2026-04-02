@@ -16,7 +16,7 @@ function Navbar(){
          {/* //for image */}
         <div>
             <img src="https://images.unsplash.com/photo-1504674900247-0877df9cc836"
-            alt="food" className="img-fluid w-100" style={{ height: "200px", objectFit: "cover" }}></img>
+            alt="food" className="img-fluid w-100" style={{ height: "500px", objectFit: "cover" }}></img>
         </div>
     </div>
     
