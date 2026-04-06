@@ -1,8 +1,14 @@
 import { useState } from "react";
+import {useContext} from "react" ;
+import CartContext from "../store/Cartcontext";
 
 function Navbar(props){
 
-   
+    const Cartctx=useContext(CartContext) ;
+
+    const numberOfCartItems=Cartctx.items.reduce((curNumber,item)=>{
+       return curNumber+item.amount
+    },0) ;
  return (
     <div>
         <nav class="d-flex justify-content-between align-items-start p-3 px-4 bg-danger text-white">
@@ -10,7 +16,7 @@ function Navbar(props){
            <div >
             <button class=" text-light bg-dark btn btn-secondary btn-lg   position-relative" onClick={props.onShow}>🛒 Your Cart
                 <button class="rounded-circle bg-danger text-white" >
-                    3
+                    {numberOfCartItems}
                 </button>
             </button>
            </div>

@@ -4,6 +4,7 @@ import {useState} from "react" ;
 import Navbar from './components/Navbar';
 import Meals from './components/Meals/Meals';
 import Cart from './components/Cart/Cart'
+import CartProvider from './store/CartProvider';
 
 function App() {
    const [isCartOpen,setIsCartOpen]=useState(false) ;
@@ -17,14 +18,14 @@ function App() {
    }
 
   return (
-    <>
+    <CartProvider>
        {isCartOpen && <Cart onHide={hideCartHandler}/>}
        <Navbar onShow={showCartHandler}/>
        <main>
            <Meals/>
        </main>
        
-    </>
+    </CartProvider>
   );
 }
 
