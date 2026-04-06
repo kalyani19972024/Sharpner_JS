@@ -14,7 +14,7 @@ const Cart=(props)=>{
             <span>35.62</span>
         </div>
         <div className="justify-content-end d-flex gap-3">
-            <button className="btn btn-outline-secondary">Close</button>
+            <button className="btn btn-outline-secondary" onClick={props.onHide}>Close</button>
             <button className="btn btn-danger">Order</button>
         </div>
     </Modal>

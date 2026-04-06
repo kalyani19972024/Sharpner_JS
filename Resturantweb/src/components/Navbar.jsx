@@ -1,13 +1,16 @@
+import { useState } from "react";
 
-function Navbar(){
+function Navbar(props){
+
+   
  return (
     <div>
         <nav class="d-flex justify-content-between align-items-start p-3 px-4 bg-danger text-white">
         <h1>Reactmeals</h1>
            <div >
-            <button class=" text-light bg-dark btn btn-secondary btn-lg   position-relative">🛒 Your Cart
-                <button class="rounded-circle bg-danger text-white">
-                    0
+            <button class=" text-light bg-dark btn btn-secondary btn-lg   position-relative" onClick={props.onShow}>🛒 Your Cart
+                <button class="rounded-circle bg-danger text-white" >
+                    3
                 </button>
             </button>
            </div>
